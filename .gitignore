@@ -1,0 +1,23 @@
+# Symbian build artifacts
+*.o
+*.obj
+*.exe
+*.dll
+*.lib
+*.sis
+*.pkg
+*.map
+*.lst
+
+# Emulator logs
+epoc32/*
+*.log
+
+# IDE temp files
+*.tmp
+*.bak
+*.user
+*.swp
+
+# MMC contents
+E:/*.csv
