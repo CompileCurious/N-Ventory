@@ -1,34 +1,28 @@
-void CInventoryManager::LoadInventoryL() {
-    iItems.Reset();
-    RFs fs; fs.Connect(); CleanupClosePushL(fs);
-    RFile file; if (file.Open(fs, KInventoryPath, EFileRead) != KErrNone) {
-        CleanupStack::PopAndDestroy(); return;
-    }
-    CleanupClosePushL(file);
+struct InventoryItem {
+    TBuf<16> category;
+    TBuf<16> subcategory; // New: Subcategory field
+    TBuf<16> parentContainer;
+    TBuf<16> container;
+    TBuf<32> name;
+    TInt quantity;
+    TUint8 expiryMonth;
+    TUint8 expiryYear;
+    TBool hasExpiry;
 
-    TBuf8<512> buffer; file.Read(buffer);
-    TLex8 lex(buffer);
-    while (!lex.Eos()) {
-        TPtrC8 line = lex.NextToken();
-        if (line.Find(_L8("Category")) == 0) continue;
-
-        InventoryItem item;
-        TLex8 lineLex(line); TPtrC8 token;
-
-        token.Set(lineLex.NextToken()); item.category.Copy(token);
-        token.Set(lineLex.NextToken()); item.parentContainer.Copy(token);
-        token.Set(lineLex.NextToken()); item.container.Copy(token);
-        token.Set(lineLex.NextToken()); item.name.Copy(token);
-        token.Set(lineLex.NextToken()); TLex8(token).Val(item.quantity);
-        token.Set(lineLex.NextToken());
-        if (token.Length() == 4) {
-            TLex8 expiryLex(token); TInt mm, yy;
-            expiryLex.Val(mm); expiryLex.Skip(2); expiryLex.Val(yy);
-            item.expiryMonth = mm; item.expiryYear = yy; item.hasExpiry = ETrue;
-        } else item.hasExpiry = EFalse;
-
-        iItems.Append(item);
+    TBool IsExpired(const TDateTime& today) const {
+        if (!hasExpiry) return EFalse;
+        TInt currentMM = today.Month() + 1;
+        TInt currentYY = today.Year() % 100;
+        return (expiryYear < currentYY) ||
+               (expiryYear == currentYY && expiryMonth < currentMM);
     }
 
-    CleanupStack::PopAndDestroy(2); // file, fs
-}
+    TBool IsNearExpiry(const TDateTime& today) const {
+        if (!hasExpiry) return EFalse;
+        TInt currentMM = today.Month() + 1;
+        TInt currentYY = today.Year() % 100;
+        TInt deltaYY = expiryYear - currentYY;
+        TInt deltaMM = expiryMonth - currentMM + (deltaYY * 12);
+        return (deltaMM >= 0 && deltaMM <= 3);
+    }
+};
