@@ -1,7 +1,0 @@
-RESOURCE DIALOG r_confirm_merge_dialog {
-    flags = EEikDialogFlagWait;
-    buttons = R_AVKON_SOFTKEYS_OK_CANCEL;
-    items = {
-        DLG_LINE { type = EEikCtLabel; id = EMergePrompt; prompt = ""; }
-    };
-}
