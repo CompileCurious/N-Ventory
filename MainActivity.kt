@@ -1,113 +1,111 @@
-package com.example.inventory
+package com.example.n_ventory
 
-import android.app.AlertDialog
+import android.content.ContentValues
+import android.content.Intent
+import android.database.Cursor
+import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.widget.EditText
-import android.widget.Toast
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.ListView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import java.io.*
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: InventoryAdapter
-    private val inventoryList = mutableListOf<InventoryItem>()
+
+    private lateinit var db: SQLiteDatabase
+    private lateinit var itemList: ListView
+    private lateinit var items: ArrayList<String>
+    private lateinit var itemIds: ArrayList<Int>
+    private lateinit var adapter: ArrayAdapter<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        recyclerView = findViewById(R.id.recyclerView)
-        adapter = InventoryAdapter(inventoryList, ::onEdit, ::onDelete)
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerView.adapter = adapter
+        itemList = findViewById(R.id.itemList)
+        val addButton: Button = findViewById(R.id.addButton)
+        val logButton: Button = findViewById(R.id.logButton)
 
-        findViewById<FloatingActionButton>(R.id.fab).setOnClickListener {
-            showEditDialog()
+        db = openOrCreateDatabase("inventory.db", MODE_PRIVATE, null)
+
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
+                quantity INTEGER,
+                description TEXT
+            )
+        """.trimIndent())
+
+        db.execSQL("""
+            CREATE TABLE IF NOT EXISTS transaction_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                action TEXT,
+                item_name TEXT,
+                quantity INTEGER,
+                description TEXT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """.trimIndent())
+
+        loadItems()
+
+        addButton.setOnClickListener {
+            startActivity(Intent(this, AddItemActivity::class.java))
         }
 
-        loadCSV()
-    }
+        logButton.setOnClickListener {
+            startActivity(Intent(this, TransactionLogActivity::class.java))
+        }
 
-    private fun loadCSV() {
-        inventoryList.clear()
-        try {
-            val file = File(filesDir, "inventory.csv")
-            val input: InputStream = if (file.exists()) file.inputStream() else assets.open("inventory.csv")
-            input.bufferedReader().useLines { lines ->
-                lines.forEach { line ->
-                    val cols = line.split(",")
-                    if (cols.size >= 2) {
-                        inventoryList.add(InventoryItem(cols[0].trim(), cols[1].trim().toIntOrNull() ?: 0))
-                    }
-                }
+        itemList.setOnItemLongClickListener { _, _, position, _ ->
+            val itemId = itemIds[position]
+            val itemName = items[position].split(" - ")[0]
+
+            val cursor: Cursor = db.rawQuery("SELECT quantity, description FROM items WHERE id = ?", arrayOf(itemId.toString()))
+            var quantity = 0
+            var description = ""
+            if (cursor.moveToFirst()) {
+                quantity = cursor.getInt(0)
+                description = cursor.getString(1)
             }
-            adapter.notifyDataSetChanged()
-        } catch (e: Exception) {
-            Toast.makeText(this, "Failed to load CSV: ${e.message}", Toast.LENGTH_LONG).show()
+            cursor.close()
+
+            db.delete("items", "id = ?", arrayOf(itemId.toString()))
+
+            val logValues = ContentValues().apply {
+                put("action", "DELETE")
+                put("item_name", itemName)
+                put("quantity", quantity)
+                put("description", description)
+            }
+            db.insert("transaction_log", null, logValues)
+
+            loadItems()
+            true
         }
     }
 
-    private fun saveCSV() {
-        try {
-            val file = File(filesDir, "inventory.csv")
-            file.printWriter().use { out ->
-                inventoryList.forEach { item ->
-                    out.println("${item.name},${item.quantity}")
-                }
-            }
-        } catch (e: Exception) {
-            Toast.makeText(this, "Failed to save CSV: ${e.message}", Toast.LENGTH_LONG).show()
+    override fun onResume() {
+        super.onResume()
+        loadItems()
+    }
+
+    private fun loadItems() {
+        items = ArrayList()
+        itemIds = ArrayList()
+        val cursor = db.rawQuery("SELECT * FROM items", null)
+        while (cursor.moveToNext()) {
+            val id = cursor.getInt(0)
+            val name = cursor.getString(1)
+            val quantity = cursor.getInt(2)
+            val description = cursor.getString(3)
+            items.add("$name - Qty: $quantity")
+            itemIds.add(id)
         }
-    }
+        cursor.close()
 
-    private fun showEditDialog(item: InventoryItem? = null, position: Int = -1) {
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_edit_item, null)
-        val nameInput = dialogView.findViewById<EditText>(R.id.editName)
-        val qtyInput = dialogView.findViewById<EditText>(R.id.editQty)
-
-        if (item != null) {
-            nameInput.setText(item.name)
-            qtyInput.setText(item.quantity.toString())
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle(if (item == null) "Add Item" else "Edit Item")
-            .setView(dialogView)
-            .setPositiveButton("Save") { _, _ ->
-                val name = nameInput.text.toString().trim()
-                val qty = qtyInput.text.toString().toIntOrNull() ?: 0
-                if (name.isNotEmpty()) {
-                    if (item == null) {
-                        inventoryList.add(InventoryItem(name, qty))
-                    } else if (position >= 0) {
-                        inventoryList[position] = InventoryItem(name, qty)
-                    }
-                    adapter.notifyDataSetChanged()
-                    saveCSV()
-                }
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    private fun onEdit(position: Int) {
-        showEditDialog(inventoryList[position], position)
-    }
-
-    private fun onDelete(position: Int) {
-        AlertDialog.Builder(this)
-            .setTitle("Delete Item")
-            .setMessage("Are you sure?")
-            .setPositiveButton("Delete") { _, _ ->
-                inventoryList.removeAt(position)
-                adapter.notifyDataSetChanged()
-                saveCSV()
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
+        adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, items)
+        itemList.adapter = adapter
     }
 }
