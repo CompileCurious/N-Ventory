@@ -1,5 +1,6 @@
 struct InventoryItem {
     TBuf<16> category;
+    TBuf<16> subcategory; // New: Subcategory field
     TBuf<16> parentContainer;
     TBuf<16> container;
     TBuf<32> name;
