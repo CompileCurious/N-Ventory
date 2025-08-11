@@ -14,12 +14,6 @@
 
 ---
 
-## Screenshots
-
-*(Add screenshots here once you have them — they make a huge difference!)*
-
----
-
 ## Installation
 
 To run the app locally:
