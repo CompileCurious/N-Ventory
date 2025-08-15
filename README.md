@@ -1,67 +1,68 @@
 # N-Ventory
 
-**N-Ventory** is a lightweight Android app for managing inventory items. Whether you're tracking tools, supplies, or collectibles, N-Ventory helps you stay organized with a simple, intuitive interface.
-
----
+**N-Ventory** is a lightweight Android inventory management app designed to help users track items, log transactions, and manage stock levels with ease. Built using Kotlin and the Android SDK, it's ideal for small businesses, hobbyists, or anyone who wants a simple mobile inventory tool.
 
 ## Features
 
-- Add items with name, quantity, and description  
-- View all items in a clean list format  
-- Delete items from your inventory  
-- Local storage using SQLite — no internet required  
-- Simple and fast UI built with native Android components
+- Add, update, and delete inventory items  
+- Search and filter items by name or category  
+- View transaction logs for stock changes  
+- Track quantities and restock thresholds  
+- Local data persistence using Room database  
+- Clean UI built with XML layouts and Material Design
 
----
+## Tech Stack
 
-## Installation
-
-To run the app locally:
-
-1. Clone the repo:
-   ```bash
-   git clone https://github.com/CompileCurious/N-Ventory.git
-   ```
-2. Open the project in Android Studio.
-3. Switch to the `Android` branch.
-4. Let Gradle sync and build the project.
-5. Run the app on an emulator or physical device.
-
----
+| Layer         | Technology         |
+|---------------|--------------------|
+| Language      | Kotlin             |
+| UI            | XML + Material     |
+| Database      | Room (SQLite)      |
+| Architecture  | MVVM (planned)     |
+| Build System  | Gradle             |
+| Target SDK    | Android 13+        |
 
 ## Project Structure
 
 ```
 N-Ventory/
 ├── app/
-│   └── src/
-│       └── main/
-│           ├── java/com/example/n_ventory/
-│           │   ├── MainActivity.java
-│           │   ├── AddItemActivity.java
-│           │   ├── DatabaseHelper.java
-│           │   └── Item.java
-│           └── res/
-│               ├── layout/
-│               │   ├── activity_main.xml
-│               │   └── activity_add_item.xml
-│               └── values/
-│                   └── strings.xml
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/com/compilecurious/nventory/
+│   │   │   ├── res/
+│   │   │   └── AndroidManifest.xml
+│   ├── build.gradle
+├── build.gradle
+├── settings.gradle
 ```
 
----
+## Installation
 
+This project is currently being built and maintained directly on GitHub, without Android Studio setup.
+
+To clone the repository:
+
+```
+git clone https://github.com/CompileCurious/N-Ventory.git
+```
+
+You can open it in Android Studio or build manually using Gradle.
+
+## Development Status
+
+This project is under active development. Current focus areas include:
+
+- Core item management  
+- Transaction logging  
+- UI polish  
+- MVVM architecture refactor  
+- Export/import functionality
+
+## Contributing
+
+Pull requests are welcome. If you spot a bug or have a feature idea, feel free to open an issue or submit a PR.
 
 ## License
 
-This project is licensed under the **Creative Commons Attribution-NonCommercial 4.0 International License**.
-
-You are free to:
-- Share — copy and redistribute the material in any medium or format
-- Adapt — remix, transform, and build upon the material
-
-Under the following terms:
-- Attribution — You must give appropriate credit.
-- NonCommercial — You may not use the material for commercial purposes.
-
-Full license text: [https://creativecommons.org/licenses/by-nc/4.0/](https://creativecommons.org/licenses/by-nc/4.0/)
+This project is licensed under the MIT License. See the LICENSE file for details.
