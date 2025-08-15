@@ -1,6 +1,8 @@
-package com.example.n_ventory
+package com.CompileCurious.n_ventory
 
+import android.Manifest
 import android.content.ContentValues
+import android.content.Context
 import android.content.Intent
 import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
@@ -10,6 +12,10 @@ import android.widget.Button
 import android.widget.ListView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import com.example.n_ventory.utils.BackupUtils
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -27,6 +33,10 @@ class MainActivity : AppCompatActivity() {
         val addButton: Button = findViewById(R.id.addButton)
         val logButton: Button = findViewById(R.id.logButton)
 
+        // Request permission for external storage
+        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
+
+        // Initialize or create database
         try {
             db = openOrCreateDatabase("inventory.db", MODE_PRIVATE, null)
 
@@ -53,6 +63,16 @@ class MainActivity : AppCompatActivity() {
             Log.e("MainActivity", "Database setup failed: ${e.message}")
         }
 
+        // Perform monthly backup
+        val prefs = getSharedPreferences("backup_prefs", Context.MODE_PRIVATE)
+        val lastBackupMonth = prefs.getString("last_backup_month", "")
+        val currentMonth = SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Date())
+
+        if (lastBackupMonth != currentMonth) {
+            BackupUtils.backupDatabase(this)
+            prefs.edit().putString("last_backup_month", currentMonth).apply()
+        }
+
         loadItems()
 
         addButton.setOnClickListener {
@@ -67,7 +87,6 @@ class MainActivity : AppCompatActivity() {
             val itemId = itemIds[position]
             val itemName = items[position].substringBefore(" - ")
 
-            // Show confirmation dialog
             AlertDialog.Builder(this)
                 .setTitle("Delete Item")
                 .setMessage("Are you sure you want to delete \"$itemName\" from inventory?")
