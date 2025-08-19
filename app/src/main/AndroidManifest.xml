@@ -2,8 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.n_ventory">
 
-    <!-- Permissions -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <!-- ✅ Scoped Storage: WRITE_EXTERNAL_STORAGE deprecated in API 29+ -->
+    <!-- Consider using MediaStore or SAF instead of this permission -->
+    <!-- <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> -->
 
     <application
         android:allowBackup="true"
@@ -11,12 +12,12 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+        android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar">
 
         <!-- ✅ FileProvider for CSV sharing -->
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.example.n_ventory.provider"
+            android:authorities="${applicationId}.provider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
@@ -24,11 +25,13 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- Activities -->
-        <activity android:name=".AddItemActivity" />
-        <activity android:name=".UpdateItemActivity" />
-        <activity android:name=".TransactionLogActivity" />
-        <activity android:name=".MainActivity">
+        <!-- ✅ Activities -->
+        <activity android:name=".AddItemActivity" android:exported="false" />
+        <activity android:name=".UpdateItemActivity" android:exported="false" />
+        <activity android:name=".TransactionLogActivity" android:exported="false" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
